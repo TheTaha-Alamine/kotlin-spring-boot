@@ -1,0 +1,148 @@
+buildscript {
+	ext {
+		java_version = '11'
+		kotlin_version = '1.5.20'
+		springboot_version = '2.5.2'
+	}
+	repositories {
+		google()
+	}
+	dependencies {
+		classpath group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: kotlin_version
+		classpath group: 'org.jetbrains.kotlin', name: 'kotlin-allopen', version: kotlin_version
+		classpath group: 'com.typesafe', name: 'config', version: '1.3.4'
+	}
+}
+
+plugins {
+	id 'java'
+	id "io.spring.dependency-management" version "1.0.11.RELEASE"
+	id "org.springframework.boot" version "2.5.2"
+	id "org.owasp.dependencycheck" version "6.0.2"
+}
+
+configurations {
+	ktlint
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: "java-library"
+
+group = "com.example"
+version = "0.0.1-SNAPSHOT"
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	ktlint "com.pinterest:ktlint:0.34.2"
+
+	implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
+	implementation group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: kotlin_version
+
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: springboot_version
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: springboot_version
+	implementation group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '2.5.2'
+
+	implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-kotlin', version: '2.10.2'
+
+	testImplementation group: 'io.mockk', name: 'mockk', version: '1.9.3'
+	testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springboot_version
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+	kotlinOptions {
+		jvmTarget = "11"
+	}
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		showStandardStreams = true
+		exceptionFormat = 'full'
+		events = ["passed", "failed"]
+	}
+}
+
+compileKotlin {
+	kotlinOptions {
+		jvmTarget = java_version
+	}
+}
+
+compileTestKotlin {
+	kotlinOptions {
+		jvmTarget = java_version
+	}
+}
+
+static def gitCommand(envVar, gitCommand) {
+	if (System.env[envVar] != null) {
+		System.env[envVar]
+	} else {
+		def commandResult = ""
+		def proc = gitCommand.execute()
+		proc.in.eachLine { line -> commandResult = line }
+		proc.err.eachLine { line -> println line }
+		proc.waitFor()
+		commandResult
+	}
+}
+
+static def gitBranch() {
+	gitCommand("CI_COMMIT_REF_NAME", "git rev-parse --abbrev-ref HEAD")
+}
+
+static def gitShortCommitHash() {
+	gitCommand("CI_COMMIT_SHORT_SHA", "git rev-parse --short HEAD")
+}
+
+println "Detected git branch '${gitBranch()}' on commit '${gitShortCommitHash()}'"
+
+def ktlintMain = "com.pinterest.ktlint.Main"
+def ktlintSources = "src/**/*.kt"
+
+task ktlint(type: JavaExec, group: "ktlint") {
+	description = "Check Kotlin code style."
+	classpath = configurations.ktlint
+	main = ktlintMain
+	args ktlintSources
+}
+check.dependsOn ktlint
+
+task ktlintFormat(type: JavaExec, group: "ktlint") {
+	description = "Auto-correct Kotlin code style."
+	classpath = configurations.ktlint
+	main = ktlintMain
+	args "-F", ktlintSources
+}
+
+task ktlintIntelliJ(type: JavaExec, group: "ktlint") {
+	description = "Setup IntelliJ KTLint configuration."
+	classpath = configurations.ktlint
+	main = ktlintMain
+	args "--apply-to-idea-project", "-y"
+}
+
+tasks.withType(Test){ Task t ->
+	def availableProcessors = Runtime.runtime.availableProcessors()
+	maxParallelForks = availableProcessors ?: 1
+	println("Task ${t.name} will run with maxParallelForks=$maxParallelForks,availableProcessors=$availableProcessors.")
+}
+
+configurations.all {
+	resolutionStrategy {
+		eachDependency {
+			// Force Kotlin to our version
+			if (requested.group == "org.jetbrains.kotlin") {
+				useVersion("1.3.72")
+			}
+		}
+	}
+}

@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class InversionOfApplication
 
 fun main(args: Array<String>) {
-	runApplication<InversionOfApplication>(*args)
+    runApplication<InversionOfApplication>(*args)
 }
