@@ -57,7 +57,7 @@ class StockRepository(private val jdbcTemplate: NamedParameterJdbcTemplate) {
 
         val params = mapOf(
             "sku" to stock.sku,
-            "base_product_no" to stock.baseProductNo,
+            "baseProductNo" to stock.baseProductNo,
             "amount" to stock.amount
         )
 

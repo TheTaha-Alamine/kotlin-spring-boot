@@ -20,7 +20,7 @@ class StockRepositoryTest : PostgresTestContainer() {
 
     @Test
     fun `should return null given empty sku or that's not exist`() {
-        listOf("", " ", "123456")
+        listOf("", " ", "1234567")
             .forEach { assertThat(stockRepository.findBySku(it)).isNull() }
     }
 
@@ -31,5 +31,14 @@ class StockRepositoryTest : PostgresTestContainer() {
         val stock = stockRepository.findBySku("123456")
         assertThat(stock).isNotNull
         assertThat(stock!!.amount).isEqualTo(19)
+    }
+
+    @Test
+    fun `should update existing stock given new amount`() {
+        val baseProductNo = "222222"
+        stockRepository.create(StockModel.Stock(baseProductNo, baseProductNo, 20))
+        val stock = stockRepository.findBySku(baseProductNo)!!
+        stockRepository.update(stock.copy(amount = 80))
+        assertThat(stockRepository.findBySku(baseProductNo)!!.amount).isEqualTo(80)
     }
 }
