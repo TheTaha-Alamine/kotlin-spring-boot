@@ -11,17 +11,17 @@ class StockRepository(private val jdbcTemplate: NamedParameterJdbcTemplate) {
 
     private val log = LoggerFactory.getLogger(this::class.java.name)!!
 
-    fun findBySku(sku: String): StockModel.Stock?{
-        if(sku.isBlank()) return null
+    fun findBySku(sku: String): StockModel.Stock? {
+        if (sku.isBlank()) return null
 
         return Try {
             jdbcTemplate.queryForObject(
-                """SELECT * FROM stock WHERE sku := sku""".trimIndent(),
+                """SELECT sku, base_product_no, amount FROM stock WHERE sku = :sku""".trimIndent(),
                 mapOf("sku" to sku)
-            ) {rs, _ ->
+            ) { rs, _ ->
                 StockModel.Stock(
                     rs.getString("sku"),
-                    rs.getString("baseProductNo"),
+                    rs.getString("base_product_no"),
                     rs.getInt("amount")
                 )
             }
@@ -34,10 +34,10 @@ class StockRepository(private val jdbcTemplate: NamedParameterJdbcTemplate) {
         )
     }
 
-    fun create(stock: StockModel.Stock){
-        if(stock.baseProductNo.isNullOrBlank()) return
+    fun create(stock: StockModel.Stock) {
+        if (stock.baseProductNo.isNullOrBlank()) return
 
-        val updatedRows = jdbcTemplate.update("""INSERT INTO stock (sku, baseProductNo, amount) 
+        val updatedRows = jdbcTemplate.update("""INSERT INTO stock (sku, base_product_no, amount) 
             VALUES (:sku, :baseProductNo, :amount)""".trimIndent(),
             mapOf(
                 "sku" to stock.sku,
@@ -57,7 +57,7 @@ class StockRepository(private val jdbcTemplate: NamedParameterJdbcTemplate) {
 
         val params = mapOf(
             "sku" to stock.sku,
-            "baseProductNo" to stock.baseProductNo,
+            "base_product_no" to stock.baseProductNo,
             "amount" to stock.amount
         )
 

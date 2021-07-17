@@ -4,6 +4,7 @@ buildscript {
 		kotlin_version = '1.5.20'
 		springboot_version = '2.5.2'
 		arrow_version = '0.8.2'
+		test_containers_version = '1.15.2'
 	}
 	repositories {
 		google()
@@ -58,6 +59,9 @@ dependencies {
 
 	testImplementation group: 'io.mockk', name: 'mockk', version: '1.9.3'
 	testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springboot_version
+	testImplementation group: 'org.testcontainers', name: 'testcontainers', version: test_containers_version
+	testImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: test_containers_version
+	testImplementation group: 'org.testcontainers', name: 'postgresql', version: test_containers_version
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
@@ -73,6 +77,13 @@ test {
 		exceptionFormat = 'full'
 		events = ["passed", "failed"]
 	}
+	systemProperties([
+			'DATABASE_HOST'    : System.getProperty('DATABASE_HOST', "localhost"),
+			'DATABASE_PORT'    : System.getProperty('DATABASE_PORT', "5432"),
+			'DATABASE_USER'    : System.getProperty('DATABASE_USER', "compose-postgres"),
+			'DATABASE_PASSWORD': System.getProperty('DATABASE_PASSWORD', "compose-postgres"),
+			'DATABASE_NAME'    : System.getProperty('DATABASE_NAME', "compose-postgres"),
+	])
 }
 
 compileKotlin {
