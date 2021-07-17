@@ -1,1 +1,10 @@
-
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/inversion_db
+    username: compose-postgres
+    password: compose-postgres
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
