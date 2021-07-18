@@ -34,6 +34,15 @@ class StockRepository(private val jdbcTemplate: NamedParameterJdbcTemplate) {
         )
     }
 
+    fun findAll(): List<String>? {
+        val skus: List<String>? = jdbcTemplate.query(
+            """SELECT sku FROM stock""".trimIndent()
+        ) { rs, _ ->
+                rs.getString("sku")
+        }
+        return skus
+    }
+
     fun create(stock: StockModel.Stock) {
         if (stock.baseProductNo.isNullOrBlank()) return
 
